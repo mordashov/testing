@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Data.OleDb;
 
 namespace Testing
 {
@@ -23,35 +26,58 @@ namespace Testing
         public MainWindow()
         {
             InitializeComponent();
+            GenerateRadioButton();
+            BindComboBox(comboboxFio);
+        }
 
+        //Вывод вариантов ответов
+        private void GenerateRadioButton()
+        {
             for (int i = 0; i < 4; i++)
             {
                 RadioButton rb = new RadioButton()
-                    {Content = "Radio button " + i, IsChecked = i == 0};
-                rb.Checked += (sender, args) => { Console.WriteLine("Pressed " + (sender as RadioButton).Tag); };
+                    { Content = "Radio button " + i, IsChecked = i == 0 };
+                rb.Checked += (sender, args) => { Console.WriteLine(@"Pressed " + (sender as RadioButton)?.Tag); };
                 rb.Unchecked += (sender, args) => { };
                 rb.Tag = i;
                 StackPanelAnswers.Children.Add(rb);
             }
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        public void BindComboBox(ComboBox comboBoxName)
         {
-            string txt = "";
+            MsAccess acs = new MsAccess();
+            string sql = "SELECT usr.usr_tn, usr.usr_fln FROM usr";
+            string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + @"D:\Dropbox\Task\testing.accdb";
+            OleDbDataAdapter da = new OleDbDataAdapter(sql, connectionString);
+            DataSet ds = new DataSet();
+            da.Fill(ds, "t");
+            comboBoxName.ItemsSource = ds.Tables["t"].DefaultView;
+            comboBoxName.DisplayMemberPath = ds.Tables["t"].Columns["usr_fln"].ToString();
+            comboBoxName.SelectedValuePath = ds.Tables["t"].Columns["usr_tn"].ToString();
+        }
+
+        //Запись ответа в базу
+        private void InsertAnswer()
+        {
             foreach (var item in StackPanelAnswers.Children)
             {
-                if (item is RadioButton)
+                if (item is RadioButton rb)
                 {
-                    RadioButton rb = (RadioButton) item;
                     if (rb.IsChecked == true)
                     {
-                        txt = rb.Content.ToString();
+                        var txt = rb.Content.ToString();
                         MessageBox.Show(txt);
                         break;
                     }
                 }
-               
+
             }
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            InsertAnswer();
         }
     }
 }
