@@ -12,8 +12,9 @@
             <TextBox TextWrapping="NoWrap" Text="Таб. №" Width="120" Height="40" Margin="20,0,0,0" TextAlignment="Center" VerticalContentAlignment="Center" FontSize="16" />
         </StackPanel>
         <TextBox HorizontalAlignment="Left" Height="65" Margin="56,147,0,0" TextWrapping="Wrap" Text="Вопрос" VerticalAlignment="Top" Width="683" FontSize="16"  VerticalContentAlignment="Center"/>
-        <StackPanel HorizontalAlignment="Left" Height="200" Margin="56,229,0,0" VerticalAlignment="Top" Width="683"/>
-        <Button Content="Завершить тестирование" HorizontalAlignment="Left" Height="47" Margin="56,448,0,0" VerticalAlignment="Top" Width="199"/>
+        <StackPanel x:Name="StackPanelAnswers" HorizontalAlignment="Left" Height="200" Margin="56,229,0,0" VerticalAlignment="Top" Width="683">
+        </StackPanel>
+        <Button Content="Ответить" HorizontalAlignment="Left" Height="47" Margin="56,448,0,0" VerticalAlignment="Top" Width="199" Click="Button_Click"/>
 
     </Grid>
 </Window>
