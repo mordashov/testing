@@ -8,8 +8,8 @@
         Title="Testing" Height="550" Width="800">
     <Grid>
         <StackPanel HorizontalAlignment="Left" Height="70" Margin="56,46,0,0" VerticalAlignment="Top" Width="683" Orientation="Horizontal">
-            <ComboBox x:Name="comboboxFio" Width="300" Height="40" HorizontalAlignment="Center" IsEditable="True" FontSize="16" Text="ФИО" VerticalContentAlignment="Center" ItemsSource="{Binding}"/>
-            <TextBox TextWrapping="NoWrap" Text="Таб. №" Width="120" Height="40" Margin="20,0,0,0" TextAlignment="Center" VerticalContentAlignment="Center" FontSize="16" />
+            <ComboBox x:Name="comboboxFio" Width="300" Height="40" HorizontalAlignment="Center" IsEditable="True" FontSize="16" Text="ФИО" VerticalContentAlignment="Center" ItemsSource="{Binding Mode=OneWay}" DropDownClosed="comboboxFio_DropDownClosed"/>
+            <TextBox x:Name="textBoxTn" TextWrapping="NoWrap" Text="Таб. №" Width="120" Height="40" Margin="20,0,0,0" TextAlignment="Center" VerticalContentAlignment="Center" FontSize="16" />
         </StackPanel>
         <TextBox HorizontalAlignment="Left" Height="65" Margin="56,147,0,0" TextWrapping="Wrap" Text="Вопрос" VerticalAlignment="Top" Width="683" FontSize="16"  VerticalContentAlignment="Center"/>
         <StackPanel x:Name="StackPanelAnswers" HorizontalAlignment="Left" Height="200" Margin="56,229,0,0" VerticalAlignment="Top" Width="683">

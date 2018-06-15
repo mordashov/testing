@@ -47,14 +47,14 @@ namespace Testing
         public void BindComboBox(ComboBox comboBoxName)
         {
             MsAccess acs = new MsAccess();
+            string connectionString = acs.MainConnectionString;
             string sql = "SELECT usr.usr_tn, usr.usr_fln FROM usr";
-            string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + @"D:\Dropbox\Task\testing.accdb";
             OleDbDataAdapter da = new OleDbDataAdapter(sql, connectionString);
             DataSet ds = new DataSet();
             da.Fill(ds, "t");
-            comboBoxName.ItemsSource = ds.Tables["t"].DefaultView;
             comboBoxName.DisplayMemberPath = ds.Tables["t"].Columns["usr_fln"].ToString();
             comboBoxName.SelectedValuePath = ds.Tables["t"].Columns["usr_tn"].ToString();
+            comboBoxName.ItemsSource = ds.Tables["t"].DefaultView;
         }
 
         //Запись ответа в базу
@@ -78,6 +78,11 @@ namespace Testing
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             InsertAnswer();
+        }
+
+        private void comboboxFio_DropDownClosed(object sender, EventArgs e)
+        {
+            textBoxTn.Text = comboboxFio.SelectedValue.ToString();
         }
     }
 }
