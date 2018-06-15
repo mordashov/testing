@@ -11,6 +11,7 @@ namespace Testing
 {
     class MsAccess
     {
+        private string _basePath = @"D:\Dropbox\Task\testing.accdb";
         private string _mainConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=D:\Dropbox\Task\testing.accdb";
 
         public string MainConnectionString
@@ -19,8 +20,14 @@ namespace Testing
             set => _mainConnectionString = value;
         }
 
+        public string BasePath
+        {
+            get => _basePath;
+            set => _basePath = value;
+        }
+
         //Соединение с базой данных
-        public OleDbConnection Connection(string basePath)
+        public OleDbConnection Connection()
         {
             //Подключение к базе данных Access
             OleDbConnection connection = new OleDbConnection
