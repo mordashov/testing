@@ -15,6 +15,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Data.OleDb;
+using System.Runtime.Remoting.Channels;
+using System.Threading;
 
 namespace Testing
 {
@@ -33,6 +35,8 @@ namespace Testing
         private void GenerateRadioButton()
         {
 
+            StackPanelAnswers.Children.Clear();
+            textBoxQuestion.Text = String.Empty;
             MsAccess acs = new MsAccess();
             string connectionString = acs.MainConnectionString;
             string sql =
@@ -49,8 +53,16 @@ namespace Testing
             OleDbDataAdapter da = new OleDbDataAdapter(sql, connectionString);
             DataSet ds = new DataSet();
             da.Fill(ds, "t");
-
-            int countQuestions = int.Parse(ds.Tables["t"].Rows[0]["qst_cnt"].ToString());
+            int countQuestions = 0;
+            try
+            {
+                countQuestions = int.Parse(ds.Tables["t"].Rows[0]["qst_cnt"].ToString());
+            }
+            catch (Exception)
+            {
+                textBoxQuestion.Text = "Тест по данному сотруднику пройден!";
+                return;
+            }
 
             string questionName = ds.Tables["t"].Rows[0]["qst_nm"].ToString();
             textBoxQuestion.Text = questionName;
@@ -65,6 +77,8 @@ namespace Testing
                 {
                     Content = value,
                     Uid = id,
+                    Margin = new Thickness(0, 10, 0, 0),
+                    FontSize = 16,
                     IsChecked = i == 0
                 };
                 rb.Checked += (sender, args) => { Console.WriteLine(@"Pressed " + (sender as RadioButton)?.Tag); };
@@ -72,6 +86,9 @@ namespace Testing
                 rb.Tag = i;
                 StackPanelAnswers.Children.Add(rb);
             }
+
+            //textBoxQuestion.Background = Brushes.Transparent;
+            buttonAnswer.IsEnabled = true;
         }
 
         public void BindComboBox(ComboBox comboBoxName)
@@ -97,19 +114,25 @@ namespace Testing
                 {
                     if (rb.IsChecked == true)
                     {
-                        var txt = rb.Content.ToString();
-                        var id = rb.Uid.ToString();
+                        string usrTn = textBoxTn.Text;
+                        string anwId = rb.Uid;
 
                         MsAccess acs = new MsAccess();
                         OleDbDataAdapter adapter = new OleDbDataAdapter();
                         OleDbCommand command = new OleDbCommand(
                             "INSERT INTO rez (usr_tn, anw_id) " +
-                            "VALUES (?, ?)", acs.Connection());
+                            "VALUES (@usr_tn, @anw_id)", acs.Connection());
 
-                        command.Parameters.Add(
-                            "usr_tn", OleDbType.Integer, 10, "usr_tn");
-                        command.Parameters.Add(
-                            "anw_id", OleDbType.Integer, 40, "anw_id");
+                        command.Parameters.Add("@usr_tn", OleDbType.Integer);
+                        command.Parameters.Add("@anwId", OleDbType.Integer);
+
+                        command.Parameters["@usr_tn"].Value = usrTn;
+                        command.Parameters["@anwId"].Value = anwId;
+
+                        //command.Parameters.Add(
+                        //    usrTn , OleDbType.Integer, 10, "usr_tn");
+                        //command.Parameters.Add(
+                        //    anwId, OleDbType.Integer, 40, "anw_id");
 
                         adapter.InsertCommand = command;
                         adapter.InsertCommand.ExecuteNonQuery();
@@ -125,14 +148,16 @@ namespace Testing
         private void SelectWorker()
         {
             textBoxTn.Text = comboboxFio.SelectedValue.ToString();
-            StackPanelAnswers.Children.Clear();
             GenerateRadioButton();
-
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
+            buttonAnswer.IsEnabled = false;
             InsertAnswer();
+            Thread.Sleep(1000);
+            GenerateRadioButton();
+            
         }
 
         private void comboboxFio_DropDownClosed(object sender, EventArgs e)
