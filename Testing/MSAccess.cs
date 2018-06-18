@@ -11,8 +11,12 @@ namespace Testing
 {
     class MsAccess
     {
-        private string _basePath = @"D:\Dropbox\Task\testing.accdb";
-        private string _mainConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=D:\Dropbox\Task\testing.accdb";
+        //private string _basePath = Environment.CurrentDirectory + "\\testing.accdb";
+        //private string _mainConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + Environment.CurrentDirectory + "\\testing.accdb";
+        //D:\Dropbox\Task
+
+        private string _basePath = "D:\\Dropbox\\Task\\testing.accdb";
+        private string _mainConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=D:\\Dropbox\\Task\\testing.accdb";
 
         public string MainConnectionString
         {

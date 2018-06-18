@@ -32,23 +32,29 @@ namespace Testing
         }
 
         //Вывод вариантов ответов
-        private void GenerateRadioButton()
+        private void GenerateQuestions()
         {
 
-            StackPanelAnswers.Children.Clear();
+            StackPanelAnswers.Items.Clear();
             textBoxQuestion.Text = String.Empty;
             MsAccess acs = new MsAccess();
             string connectionString = acs.MainConnectionString;
             string sql =
-                $@"SELECT usr.usr_tn, qst.qst_nm, qst.qst_id, anw.anw_id, anw.anw_nm, DCount('[anw_id]','[anw]','[qst_id] = ' & [qst]![qst_id]) AS qst_cnt
-                    FROM usr, qst INNER JOIN anw ON qst.qst_id = anw.qst_id
-                    WHERE usr.usr_tn = {textBoxTn.Text} AND qst.qst_id Not In (
+                $@"SELECT usr.usr_tn, 
+                    qst.qst_nm, 
+                    qst.qst_id, 
+                    anw.anw_id, 
+                    anw.anw_nm, 
+                    DCount('[anw_id]','[anw]','[qst_id] = ' & [qst]![qst_id]) AS qst_cnt,
+                    qst.qst_tp
+                FROM usr, qst INNER JOIN anw ON qst.qst_id = anw.qst_id
+                WHERE usr.usr_tn = {textBoxTn.Text} AND qst.qst_id Not In (
                         SELECT anw.qst_id
                         FROM anw INNER JOIN rez ON anw.anw_id = rez.anw_id
                         WHERE rez.[usr_tn] = [usr]![usr_tn]
                         GROUP BY anw.qst_id
                     )
-                    ORDER BY usr.usr_tn, qst.qst_nm, anw.anw_id;
+                    ORDER BY qst.qst_id, usr.usr_tn, qst.qst_nm, anw.anw_id;
                     ";
             OleDbDataAdapter da = new OleDbDataAdapter(sql, connectionString);
             DataSet ds = new DataSet();
@@ -67,28 +73,104 @@ namespace Testing
             string questionName = ds.Tables["t"].Rows[0]["qst_nm"].ToString();
             textBoxQuestion.Text = questionName;
 
+            if (ds.Tables["t"].Rows[0]["qst_tp"].ToString() == "radio")
+            {
+                //Генерация Radiobutton
+                GenerateRadioButton(countQuestions, ds);
+            }
+            if (ds.Tables["t"].Rows[0]["qst_tp"].ToString() == "check")
+            {
+                //Генерация Radiobutton
+                GenerateCheckBox(countQuestions, ds);
+            }
 
 
+
+
+
+
+            //textBoxQuestion.Background = Brushes.Transparent;
+            buttonAnswer.IsEnabled = true;
+        }
+
+        //Генерация RadioButton
+        public void GenerateRadioButton(int countQuestions, DataSet ds)
+        {
             for (int i = 0; i < countQuestions; i++)
             {
                 string value = ds.Tables["t"].Rows[i]["anw_nm"].ToString();
                 string id = ds.Tables["t"].Rows[i]["anw_id"].ToString();
+
+                TextBlock tbl = new TextBlock()
+                {
+                    Text=value,
+                    TextWrapping = TextWrapping.Wrap
+                };
+
                 RadioButton rb = new RadioButton()
+                {
+                    Content = tbl,
+                    Uid = id,
+                    Margin = new Thickness(0, 10, 0, 10),
+                    FontSize = 14,
+                    IsChecked = i == 0
+                };
+
+                rb.Checked += (sender, args) => { Console.WriteLine(@"Pressed " + (sender as RadioButton)?.Tag); };
+                rb.Unchecked += (sender, args) => { };
+                rb.Tag = i;
+                StackPanelAnswers.Items.Add(rb);
+            }
+        }
+
+        //Генерация CheckBox
+        public void GenerateCheckBox(int countQuestions, DataSet ds)
+        {
+            for (int i = 0; i < countQuestions; i++)
+            {
+                string value = ds.Tables["t"].Rows[i]["anw_nm"].ToString();
+                string id = ds.Tables["t"].Rows[i]["anw_id"].ToString();
+                CheckBox ch = new CheckBox()
                 {
                     Content = value,
                     Uid = id,
                     Margin = new Thickness(0, 10, 0, 0),
-                    FontSize = 16,
-                    IsChecked = i == 0
+                    FontSize = 16
                 };
-                rb.Checked += (sender, args) => { Console.WriteLine(@"Pressed " + (sender as RadioButton)?.Tag); };
-                rb.Unchecked += (sender, args) => { };
-                rb.Tag = i;
-                StackPanelAnswers.Children.Add(rb);
+                ch.Checked += (sender, args) => { Console.WriteLine(@"Pressed " + (sender as CheckBox)?.Tag); };
+                ch.Unchecked += (sender, args) => { };
+                ch.Tag = i;
+                StackPanelAnswers.Items.Add(ch);
             }
+        }
 
-            //textBoxQuestion.Background = Brushes.Transparent;
-            buttonAnswer.IsEnabled = true;
+        //Генерация TextBox
+        public void GenerateTextBox(int countQuestions, DataSet ds)
+        {
+            for (int i = 0; i < countQuestions; i++)
+            {
+                string value = ds.Tables["t"].Rows[i]["anw_nm"].ToString();
+                string id = ds.Tables["t"].Rows[i]["anw_id"].ToString();
+                TextBox tx = new TextBox()
+                {
+                    Text = "",
+                    Uid = id,
+                    Margin = new Thickness(0, 10, 0, 0),
+                    FontSize = 16
+                };
+                Label txl = new Label()
+                {
+                    Content = value,
+                    Uid = id,
+                    Margin = new Thickness(0, 10, 0, 0),
+                    FontSize = 16
+                };
+                //ch.Checked += (sender, args) => { Console.WriteLine(@"Pressed " + (sender as TextBox)?.Tag); };
+                //ch.Unchecked += (sender, args) => { };
+                //ch.Tag = i;
+                StackPanelAnswers.Items.Add(tx);
+                StackPanelAnswers.Items.Add(txl);
+            }
         }
 
         public void BindComboBox(ComboBox comboBoxName)
@@ -98,7 +180,15 @@ namespace Testing
             string sql = "SELECT usr.usr_tn, usr.usr_fln FROM usr";
             OleDbDataAdapter da = new OleDbDataAdapter(sql, connectionString);
             DataSet ds = new DataSet();
-            da.Fill(ds, "t");
+            try
+            {
+                da.Fill(ds, "t");
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Не могу найти базу данных!\nБаза Access должна быть расположена в одной папке с исполняемым файлом");
+                Environment.Exit(0);
+            }
             comboBoxName.DisplayMemberPath = ds.Tables["t"].Columns["usr_fln"].ToString();
             comboBoxName.SelectedValuePath = ds.Tables["t"].Columns["usr_tn"].ToString();
             comboBoxName.ItemsSource = ds.Tables["t"].DefaultView;
@@ -108,7 +198,7 @@ namespace Testing
         //Запись ответа в базу
         private void InsertAnswer()
         {
-            foreach (var item in StackPanelAnswers.Children)
+            foreach (var item in StackPanelAnswers.Items)
             {
                 if (item is RadioButton rb)
                 {
@@ -148,7 +238,7 @@ namespace Testing
         private void SelectWorker()
         {
             textBoxTn.Text = comboboxFio.SelectedValue.ToString();
-            GenerateRadioButton();
+            GenerateQuestions();
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -156,7 +246,7 @@ namespace Testing
             buttonAnswer.IsEnabled = false;
             InsertAnswer();
             Thread.Sleep(1000);
-            GenerateRadioButton();
+            GenerateQuestions();
             
         }
 

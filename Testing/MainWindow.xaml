@@ -5,16 +5,30 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Testing"
         mc:Ignorable="d"
-        Title="Testing" Height="550" Width="800">
-    <Grid>
-        <StackPanel HorizontalAlignment="Left" Height="70" Margin="56,46,0,0" VerticalAlignment="Top" Width="683" Orientation="Horizontal">
+        Title="Testing" Height="620" Width="800">
+        <Grid>
+        <StackPanel HorizontalAlignment="Left" Height="70" Margin="56,75,0,0" VerticalAlignment="Top" Width="683" Orientation="Horizontal">
             <ComboBox x:Name="comboboxFio" Width="300" Height="40" HorizontalAlignment="Center" IsEditable="True" FontSize="16" Text="ФИО" VerticalContentAlignment="Center" ItemsSource="{Binding Mode=OneWay}" DropDownClosed="comboboxFio_DropDownClosed" KeyUp="comboboxFio_KeyUp"/>
             <TextBox x:Name="textBoxTn" TextWrapping="NoWrap" Text="Таб. №" Width="120" Height="40" Margin="20,0,0,0" TextAlignment="Center" VerticalContentAlignment="Center" FontSize="16" />
         </StackPanel>
-        <TextBox x:Name="textBoxQuestion" HorizontalAlignment="Left" Height="65" Margin="56,147,0,0" TextWrapping="Wrap" Text="Вопрос" VerticalAlignment="Top" Width="683" FontSize="16"  VerticalContentAlignment="Center"/>
-        <StackPanel x:Name="StackPanelAnswers" HorizontalAlignment="Left" Height="200" Margin="56,229,0,0" VerticalAlignment="Top" Width="683">
+        <TextBox x:Name="textBoxQuestion" HorizontalAlignment="Left" Height="65" Margin="56,165,0,0" TextWrapping="Wrap" Text="Вопрос" VerticalAlignment="Top" Width="683" FontSize="16" HorizontalContentAlignment="Left"  VerticalContentAlignment="Center"/>
+
+        <StackPanel 
+            HorizontalAlignment="Left" 
+            Height="200" 
+            Margin="56,240,0,0" 
+            VerticalAlignment="Top" 
+            Width="683" CanHorizontallyScroll="True" CanVerticallyScroll="True" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Visible">
+            <ScrollViewer CanContentScroll="True" HorizontalScrollBarVisibility="Visible" >
+                <ItemsControl
+                    x:Name="StackPanelAnswers" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Visible">
+
+                </ItemsControl>
+                </ScrollViewer>
         </StackPanel>
-        <Button x:Name="buttonAnswer" Content="Ответить" HorizontalAlignment="Left" Height="47" Margin="56,448,0,0" VerticalAlignment="Top" Width="199" Click="Button_Click"/>
+        <Button x:Name="buttonAnswer" Content="Ответить" HorizontalAlignment="Left" Height="61" Margin="56,486,0,0" VerticalAlignment="Top" Width="199" FontSize="25"  IsEnabled="False" Click="Button_Click"/>
+        <Label Content="Проверка знаний сотрудников" HorizontalAlignment="Center"  Margin="56,10,19,0" VerticalAlignment="Top" Height="69" Width="717" FontSize="40"/>
 
     </Grid>
+
 </Window>
