@@ -135,9 +135,14 @@ namespace Testing
             {
                 string value = ds.Tables["t"].Rows[i]["anw_nm"].ToString();
                 string id = ds.Tables["t"].Rows[i]["anw_id"].ToString();
+                TextBlock txb = new TextBlock()
+                {
+                    Text = value,
+                    TextWrapping = TextWrapping.Wrap
+                };
                 CheckBox ch = new CheckBox()
                 {
-                    Content = value,
+                    Content = txb,
                     Uid = id,
                     Margin = new Thickness(0, 10, 0, 0),
                     FontSize = 16
