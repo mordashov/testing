@@ -83,6 +83,11 @@ namespace Testing
                 //Генерация Radiobutton
                 GenerateCheckBox(countQuestions, ds);
             }
+            if (ds.Tables["t"].Rows[0]["qst_tp"].ToString() == "text")
+            {
+                //Генерация Порядка выбора
+                GenerateTextBox(countQuestions, ds);
+            }
 
 
 
@@ -151,25 +156,45 @@ namespace Testing
             {
                 string value = ds.Tables["t"].Rows[i]["anw_nm"].ToString();
                 string id = ds.Tables["t"].Rows[i]["anw_id"].ToString();
-                TextBox tx = new TextBox()
+                int cntCh = int.Parse(ds.Tables["t"].Rows[i]["qst_cnt"].ToString());
+                //TextBox tx = new TextBox()
+                //{
+                //    Text = "",
+                //    Uid = id,
+                //    Margin = new Thickness(0, 10, 0, 0),
+                //    FontSize = 16
+                //};
+                ComboBox tx = new ComboBox()
                 {
-                    Text = "",
                     Uid = id,
+                    IsEditable = true,
                     Margin = new Thickness(0, 10, 0, 0),
-                    FontSize = 16
+                    FontSize = 16,
+                    Width = 50
                 };
+                for (int j = 1; j <= cntCh; j++)
+                {
+                    tx.Items.Add(j);
+                }
                 Label txl = new Label()
                 {
                     Content = value,
                     Uid = id,
                     Margin = new Thickness(0, 10, 0, 0),
-                    FontSize = 16
+                    FontSize = 16,
+                    MaxWidth = 50
                 };
                 //ch.Checked += (sender, args) => { Console.WriteLine(@"Pressed " + (sender as TextBox)?.Tag); };
                 //ch.Unchecked += (sender, args) => { };
                 //ch.Tag = i;
-                StackPanelAnswers.Items.Add(tx);
-                StackPanelAnswers.Items.Add(txl);
+                StackPanel pnl = new StackPanel()
+                {
+                    Orientation = Orientation.Horizontal
+                };
+                pnl.Children.Add(tx);
+                pnl.Children.Add(txl);
+                StackPanelAnswers.Items.Add(pnl);
+                //StackPanelAnswers.Items.Add(txl);
             }
         }
 
@@ -202,6 +227,7 @@ namespace Testing
             {
                 if (item is RadioButton rb)
                 {
+                    //Вставляем radiobutton
                     if (rb.IsChecked == true)
                     {
                         string usrTn = textBoxTn.Text;
@@ -232,6 +258,99 @@ namespace Testing
                 }
 
             }
+            //Встаяляем checkbox
+            foreach (var item in StackPanelAnswers.Items)
+            {
+                if (item is CheckBox ch)
+                {
+                    //Вставляем radiobutton
+                    if (ch.IsChecked == true)
+                    {
+                        string usrTn = textBoxTn.Text;
+                        string anwId = ch.Uid;
+
+                        MsAccess acs = new MsAccess();
+                        OleDbDataAdapter adapter = new OleDbDataAdapter();
+                        OleDbCommand command = new OleDbCommand(
+                            "INSERT INTO rez (usr_tn, anw_id) " +
+                            "VALUES (@usr_tn, @anw_id)", acs.Connection());
+
+                        command.Parameters.Add("@usr_tn", OleDbType.Integer);
+                        command.Parameters.Add("@anwId", OleDbType.Integer);
+
+                        command.Parameters["@usr_tn"].Value = usrTn;
+                        command.Parameters["@anwId"].Value = anwId;
+
+                        //command.Parameters.Add(
+                        //    usrTn , OleDbType.Integer, 10, "usr_tn");
+                        //command.Parameters.Add(
+                        //    anwId, OleDbType.Integer, 40, "anw_id");
+
+                        adapter.InsertCommand = command;
+                        adapter.InsertCommand.ExecuteNonQuery();
+                        //MessageBox.Show(txt + "\n" + id);
+                    }
+                }
+
+            }
+            //Вставка значений из списка
+            //Сначало проверка на наличие пустых значений
+            foreach (var item in StackPanelAnswers.Items)
+            {
+                if (item is StackPanel stp)
+                {
+                    ComboBox cm = (ComboBox) stp.Children[0];
+                    try
+                    {
+                        string sl = cm.SelectedValue.ToString();
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("Вы оставили пустое значене!\nПожалуйста, заполните его.");
+                        return;
+                    }
+                }
+            }
+
+            foreach (var item in StackPanelAnswers.Items)
+            {
+                if (item is StackPanel stp)
+                {
+                    ComboBox cm = (ComboBox) stp.Children[0];
+                    //Вставляем radiobutton
+                    if (!string.IsNullOrEmpty(cm.SelectedValue.ToString()))
+                    {
+                        string usrTn = textBoxTn.Text;
+                        string anwId = cm.Uid;
+                        string rezVl = cm.SelectedValue.ToString();
+
+                        MsAccess acs = new MsAccess();
+                        OleDbDataAdapter adapter = new OleDbDataAdapter();
+                        OleDbCommand command = new OleDbCommand(
+                            "INSERT INTO rez (usr_tn, anw_id, rez_vl) " +
+                            "VALUES (@usr_tn, @anw_id, @rez_vl)", acs.Connection());
+
+                        command.Parameters.Add("@usr_tn", OleDbType.Integer);
+                        command.Parameters.Add("@anwId", OleDbType.Integer);
+                        command.Parameters.Add("@rezVl", OleDbType.Integer);
+
+                        command.Parameters["@usr_tn"].Value = usrTn;
+                        command.Parameters["@anwId"].Value = anwId;
+                        command.Parameters["@rezVl"].Value = rezVl;
+
+                        //command.Parameters.Add(
+                        //    usrTn , OleDbType.Integer, 10, "usr_tn");
+                        //command.Parameters.Add(
+                        //    anwId, OleDbType.Integer, 40, "anw_id");
+
+                        adapter.InsertCommand = command;
+                        adapter.InsertCommand.ExecuteNonQuery();
+                        //MessageBox.Show(txt + "\n" + id);
+                    }
+                }
+
+            }
+
         }
 
         //Собития при выборе сотрудника в Combobox
