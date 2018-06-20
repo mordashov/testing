@@ -227,7 +227,7 @@ namespace Testing
             }
             catch (Exception)
             {
-                MessageBox.Show("Не могу найти базу данных!\nБаза Access должна быть расположена в одной папке с исполняемым файлом");
+                MessageBox.Show("Не могу получить доступ к базе данных!\nБаза Access должна быть расположена в одной папке с исполняемым файлом");
                 Environment.Exit(0);
             }
             comboBoxName.DisplayMemberPath = ds.Tables["t"].Columns["usr_fln"].ToString();
@@ -438,7 +438,8 @@ namespace Testing
             {
                 System.IO.StreamReader file = new System.IO.StreamReader(configFile);
                 string line = file.ReadLine();
-                MainConnectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + line;
+                MainConnectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source="+line+";Persist Security Info=True;Jet OLEDB:Database Password=lenovo";
+                // + ";Persist Security Info=True;Jet OLEDB:Database Password=lenovo"
             }
             else
             {
