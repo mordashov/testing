@@ -28,11 +28,18 @@ namespace Testing
     public partial class MainWindow : Window
     {
         private string _mainConnectionString;
+        private string _mainBasePath;
 
         public string MainConnectionString
         {
             get => _mainConnectionString;
             set => _mainConnectionString = value;
+        }
+
+        public string MainBasePath
+        {
+            get => _mainBasePath;
+            set => _mainBasePath = value;
         }
 
         public MainWindow()
@@ -438,6 +445,7 @@ namespace Testing
             {
                 System.IO.StreamReader file = new System.IO.StreamReader(configFile);
                 string line = file.ReadLine();
+                MainBasePath = line;
                 MainConnectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source="+line+";Persist Security Info=True;Jet OLEDB:Database Password=lenovo";
                 // + ";Persist Security Info=True;Jet OLEDB:Database Password=lenovo"
             }
@@ -450,5 +458,19 @@ namespace Testing
             }
         }
 
+        private void label_Standart_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            string path = MainBasePath.Replace("testing.mdb", null) + "Стандарт проведения СР.pptx";
+
+            try
+            {
+                Process.Start(path);
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Проблема с открытием файла.\nВозможно файл недоступен");
+                return;
+            }
+        }
     }
 }

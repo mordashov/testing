@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Testing"
         mc:Ignorable="d"
-        Title="Testing" Height="620" Width="800">
+        Title="Testing" Height="700" Width="800">
     <Grid>
         <StackPanel HorizontalAlignment="Left" Height="70" Margin="56,75,0,0" VerticalAlignment="Top" Width="683" Orientation="Horizontal">
             <ComboBox x:Name="comboboxFio" Width="300" Height="40" HorizontalAlignment="Center" IsEditable="True" FontSize="16" Text="ФИО" VerticalContentAlignment="Center" ItemsSource="{Binding Mode=OneWay}" DropDownClosed="comboboxFio_DropDownClosed" KeyUp="comboboxFio_KeyUp"/>
@@ -26,8 +26,11 @@
             </StackPanel>-->
         </ScrollViewer>
 
-        <Button x:Name="buttonAnswer" Content="Ответить" HorizontalAlignment="Left" Height="61" Margin="56,486,0,0" VerticalAlignment="Top" Width="199" FontSize="25"  IsEnabled="False" Click="Button_Click"/>
+        <Button x:Name="buttonAnswer" Content="Ответить" HorizontalAlignment="Left" Height="62" Margin="56,570,0,0" VerticalAlignment="Top" Width="199" FontSize="25"  IsEnabled="False" Click="Button_Click"/>
         <Label Content="Проверка знаний сотрудников" HorizontalAlignment="Center"  Margin="56,10,19,0" VerticalAlignment="Top" Height="69" Width="717" FontSize="40"/>
+        <Label x:Name="label_Standart" HorizontalAlignment="Left" Margin="582,584,0,0" VerticalAlignment="Top" Width="106" FontSize="20" Cursor="Hand" MouseLeftButtonUp="label_Standart_MouseLeftButtonUp">
+            <TextBlock TextDecorations="Underline" Foreground="Blue">Стандарт</TextBlock>
+        </Label>
     </Grid>
 
 </Window>
