@@ -17,6 +17,8 @@ using System.Windows.Shapes;
 using System.Data.OleDb;
 using System.Runtime.Remoting.Channels;
 using System.Threading;
+using System.IO;
+using System.Diagnostics;
 
 namespace Testing
 {
@@ -25,9 +27,18 @@ namespace Testing
     /// </summary>
     public partial class MainWindow : Window
     {
+        private string _mainConnectionString;
+
+        public string MainConnectionString
+        {
+            get => _mainConnectionString;
+            set => _mainConnectionString = value;
+        }
+
         public MainWindow()
         {
             InitializeComponent();
+            SetBasePath();
             BindComboBox(comboboxFio);
         }
 
@@ -37,8 +48,7 @@ namespace Testing
 
             StackPanelAnswers.Items.Clear();
             textBoxQuestion.Text = String.Empty;
-            MsAccess acs = new MsAccess();
-            string connectionString = acs.MainConnectionString;
+            string connectionString = MainConnectionString;
             string sql =
                 $@"SELECT usr.usr_tn, 
                     qst.qst_nm, 
@@ -96,6 +106,8 @@ namespace Testing
 
             //textBoxQuestion.Background = Brushes.Transparent;
             buttonAnswer.IsEnabled = true;
+            da.Dispose();
+            ds.Dispose();
         }
 
         //Генерация RadioButton
@@ -205,8 +217,7 @@ namespace Testing
 
         public void BindComboBox(ComboBox comboBoxName)
         {
-            MsAccess acs = new MsAccess();
-            string connectionString = acs.MainConnectionString;
+            string connectionString = MainConnectionString;
             string sql = "SELECT usr.usr_tn, usr.usr_fln FROM usr";
             OleDbDataAdapter da = new OleDbDataAdapter(sql, connectionString);
             DataSet ds = new DataSet();
@@ -222,7 +233,8 @@ namespace Testing
             comboBoxName.DisplayMemberPath = ds.Tables["t"].Columns["usr_fln"].ToString();
             comboBoxName.SelectedValuePath = ds.Tables["t"].Columns["usr_tn"].ToString();
             comboBoxName.ItemsSource = ds.Tables["t"].DefaultView;
-
+            da.Dispose();
+            ds.Dispose();
         }
 
         //Запись ответа в базу
@@ -238,11 +250,17 @@ namespace Testing
                         string usrTn = textBoxTn.Text;
                         string anwId = rb.Uid;
 
-                        MsAccess acs = new MsAccess();
-                        OleDbDataAdapter adapter = new OleDbDataAdapter();
+                        OleDbConnection connection = new OleDbConnection
+                        {
+                            ConnectionString = MainConnectionString
+                        };
+
+                        connection.Open();
+
+                        OleDbDataAdapter da = new OleDbDataAdapter();
                         OleDbCommand command = new OleDbCommand(
                             "INSERT INTO rez (usr_tn, anw_id) " +
-                            "VALUES (@usr_tn, @anw_id)", acs.Connection());
+                            "VALUES (@usr_tn, @anw_id)", connection);
 
                         command.Parameters.Add("@usr_tn", OleDbType.Integer);
                         command.Parameters.Add("@anwId", OleDbType.Integer);
@@ -255,9 +273,11 @@ namespace Testing
                         //command.Parameters.Add(
                         //    anwId, OleDbType.Integer, 40, "anw_id");
 
-                        adapter.InsertCommand = command;
-                        adapter.InsertCommand.ExecuteNonQuery();
+                        da.InsertCommand = command;
+                        da.InsertCommand.ExecuteNonQuery();
                         //MessageBox.Show(txt + "\n" + id);
+                        da.Dispose();
+                        connection.Close();
                         break;
                     }
                 }
@@ -274,11 +294,17 @@ namespace Testing
                         string usrTn = textBoxTn.Text;
                         string anwId = ch.Uid;
 
-                        MsAccess acs = new MsAccess();
-                        OleDbDataAdapter adapter = new OleDbDataAdapter();
+                        OleDbConnection connection = new OleDbConnection
+                        {
+                            ConnectionString = MainConnectionString
+                        };
+
+                        connection.Open();
+
+                        OleDbDataAdapter da = new OleDbDataAdapter();
                         OleDbCommand command = new OleDbCommand(
                             "INSERT INTO rez (usr_tn, anw_id) " +
-                            "VALUES (@usr_tn, @anw_id)", acs.Connection());
+                            "VALUES (@usr_tn, @anw_id)", connection);
 
                         command.Parameters.Add("@usr_tn", OleDbType.Integer);
                         command.Parameters.Add("@anwId", OleDbType.Integer);
@@ -291,9 +317,11 @@ namespace Testing
                         //command.Parameters.Add(
                         //    anwId, OleDbType.Integer, 40, "anw_id");
 
-                        adapter.InsertCommand = command;
-                        adapter.InsertCommand.ExecuteNonQuery();
+                        da.InsertCommand = command;
+                        da.InsertCommand.ExecuteNonQuery();
                         //MessageBox.Show(txt + "\n" + id);
+                        da.Dispose();
+                        connection.Close();
                     }
                 }
 
@@ -329,11 +357,17 @@ namespace Testing
                         string anwId = cm.Uid;
                         string rezVl = cm.SelectedValue.ToString();
 
-                        MsAccess acs = new MsAccess();
-                        OleDbDataAdapter adapter = new OleDbDataAdapter();
+                        OleDbConnection connection = new OleDbConnection
+                        {
+                            ConnectionString = MainConnectionString
+                        };
+
+                        connection.Open();
+
+                        OleDbDataAdapter da = new OleDbDataAdapter();
                         OleDbCommand command = new OleDbCommand(
                             "INSERT INTO rez (usr_tn, anw_id, rez_vl) " +
-                            "VALUES (@usr_tn, @anw_id, @rez_vl)", acs.Connection());
+                            "VALUES (@usr_tn, @anw_id, @rez_vl)", connection);
 
                         command.Parameters.Add("@usr_tn", OleDbType.Integer);
                         command.Parameters.Add("@anwId", OleDbType.Integer);
@@ -348,9 +382,11 @@ namespace Testing
                         //command.Parameters.Add(
                         //    anwId, OleDbType.Integer, 40, "anw_id");
 
-                        adapter.InsertCommand = command;
-                        adapter.InsertCommand.ExecuteNonQuery();
+                        da.InsertCommand = command;
+                        da.InsertCommand.ExecuteNonQuery();
                         //MessageBox.Show(txt + "\n" + id);
+                        da.Dispose();
+                        connection.Close();
                     }
                 }
 
@@ -361,7 +397,15 @@ namespace Testing
         //Собития при выборе сотрудника в Combobox
         private void SelectWorker()
         {
-            textBoxTn.Text = comboboxFio.SelectedValue.ToString();
+            try
+            {
+                textBoxTn.Text = comboboxFio.SelectedValue.ToString();
+            }
+            catch (Exception)
+            {
+                return;
+            }
+
             GenerateQuestions();
         }
 
@@ -383,5 +427,27 @@ namespace Testing
         {
             SelectWorker();
         }
+
+        //Проверка наличия пути к базе
+        private void SetBasePath()
+        {
+
+            string baseDirectory = Environment.CurrentDirectory;
+            string configFile = baseDirectory + @"\config.txt";
+            if (File.Exists(configFile))
+            {
+                System.IO.StreamReader file = new System.IO.StreamReader(configFile);
+                string line = file.ReadLine();
+                MainConnectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + line;
+            }
+            else
+            {
+                MessageBox.Show("Конфигурационный файл не найден!\n" +
+                                "Создайте файл config.txt в папке с программой и " +
+                                "укажите в нем путь к базе данных");
+                Environment.Exit(0);
+            }
+        }
+
     }
 }

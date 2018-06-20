@@ -15,8 +15,11 @@ namespace Testing
         //private string _mainConnectionString = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + Environment.CurrentDirectory + "\\testing.accdb";
         //D:\Dropbox\Task
 
-        private string _basePath = @"D:\Dropbox\Task\testing.mdb";
-        private string _mainConnectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=D:\Dropbox\Task\testing.mdb";
+        //private string _basePath = @"C:\Users\ThinkPad\Documents\Dropbox\Task\testing.mdb";
+        //private string _mainConnectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\Users\ThinkPad\Documents\Dropbox\Task\testing.mdb";
+
+        private string _basePath;
+        private string _mainConnectionString;
 
         public string MainConnectionString
         {
