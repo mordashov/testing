@@ -46,7 +46,18 @@ namespace Testing
         {
             InitializeComponent();
             //SetBasePath();
+            //Поиск презентации стандарта в папке с исполняемым файлом
+            CheckStandart();
             BindComboBox(comboboxFio);
+        }
+
+        private void CheckStandart()
+        {
+            string standartName = Environment.CurrentDirectory + "//Стандарт проведения СР.pptx";
+            if (!File.Exists(standartName))
+            {
+                label_Standart.Visibility = Visibility.Collapsed;
+            }
         }
 
         //Вывод вариантов ответов
@@ -56,23 +67,6 @@ namespace Testing
             StackPanelAnswers.Items.Clear();
             textBoxQuestion.Text = String.Empty;
             string connectionString = MainConnectionString;
-            //string sql =
-            //    $@"SELECT usr.usr_tn, 
-            //        qst.qst_nm, 
-            //        qst.qst_id, 
-            //        anw.anw_id, 
-            //        anw.anw_nm, 
-            //        DCount('[anw_id]','[anw]','[qst_id] = ' & [qst].[qst_id]) AS qst_cnt,
-            //        qst.qst_tp
-            //    FROM usr, qst INNER JOIN anw ON qst.qst_id = anw.qst_id
-            //    WHERE usr.usr_tn = {textBoxTn.Text} AND qst.qst_id Not In (
-            //            SELECT anw.qst_id
-            //            FROM anw INNER JOIN rez ON anw.anw_id = rez.anw_id
-            //            WHERE rez.[usr_tn] = [usr].[usr_tn]
-            //            GROUP BY anw.qst_id
-            //        )
-            //        ORDER BY qst.qst_id, usr.usr_tn, qst.qst_nm, anw.anw_id;
-            //        ";
             string sql = $@"
                 SELECT	[usr_tn],
 		                [qstMain].[qst_nm], 
@@ -122,11 +116,6 @@ namespace Testing
                 //Генерация Порядка выбора
                 GenerateTextBox(countQuestions, ds);
             }
-
-
-
-
-
 
             //textBoxQuestion.Background = Brushes.Transparent;
             buttonAnswer.IsEnabled = true;
@@ -198,35 +187,28 @@ namespace Testing
                 string value = ds.Tables["t"].Rows[i]["anw_nm"].ToString();
                 string id = ds.Tables["t"].Rows[i]["anw_id"].ToString();
                 int cntCh = int.Parse(ds.Tables["t"].Rows[i]["qst_cnt"].ToString());
-                //TextBox tx = new TextBox()
-                //{
-                //    Text = "",
-                //    Uid = id,
-                //    Margin = new Thickness(0, 10, 0, 0),
-                //    FontSize = 16
-                //};
                 ComboBox tx = new ComboBox()
                 {
                     Uid = id,
                     IsEditable = true,
                     Margin = new Thickness(0, 10, 0, 0),
                     FontSize = 16,
-                    Width = 50
+                    Width = 50,
+                    Height = 30
                 };
                 for (int j = 1; j <= cntCh; j++)
                 {
                     tx.Items.Add(j);
                 }
-                Label txl = new Label()
+                TextBlock txl = new TextBlock()
                 {
-                    Content = value,
+                    Text = value,
                     Uid = id,
-                    Margin = new Thickness(0, 10, 0, 0),
-                    FontSize = 16
+                    Margin = new Thickness(10, 10, 10, 0),
+                    FontSize = 16,
+                    TextWrapping = TextWrapping.Wrap,
+                    Width = 550
                 };
-                //ch.Checked += (sender, args) => { Console.WriteLine(@"Pressed " + (sender as TextBox)?.Tag); };
-                //ch.Unchecked += (sender, args) => { };
-                //ch.Tag = i;
                 StackPanel pnl = new StackPanel()
                 {
                     Orientation = Orientation.Horizontal
@@ -234,7 +216,6 @@ namespace Testing
                 pnl.Children.Add(tx);
                 pnl.Children.Add(txl);
                 StackPanelAnswers.Items.Add(pnl);
-                //StackPanelAnswers.Items.Add(txl);
             }
         }
 
@@ -291,11 +272,6 @@ namespace Testing
                         command.Parameters["usrTn"].Value = usrTn;
                         command.Parameters["anwId"].Value = anwId;
 
-                        //command.Parameters.Add(
-                        //    usrTn , SqlDbType.Int, 10, "usr_tn");
-                        //command.Parameters.Add(
-                        //    anwId, SqlDbType.Int, 40, "anw_id");
-
                         da.InsertCommand = command;
                         da.InsertCommand.ExecuteNonQuery();
                         //MessageBox.Show(txt + "\n" + id);
@@ -335,14 +311,8 @@ namespace Testing
                         command.Parameters["@usrTn"].Value = usrTn;
                         command.Parameters["@anwId"].Value = anwId;
 
-                        //command.Parameters.Add(
-                        //    usrTn , SqlDbType.Int, 10, "usr_tn");
-                        //command.Parameters.Add(
-                        //    anwId, SqlDbType.Int, 40, "anw_id");
-
                         da.InsertCommand = command;
                         da.InsertCommand.ExecuteNonQuery();
-                        //MessageBox.Show(txt + "\n" + id);
                         da.Dispose();
                         connection.Close();
                     }
@@ -350,7 +320,7 @@ namespace Testing
 
             }
             //Вставка значений из списка
-            //Сначало проверка на наличие пустых значений
+            //Сначала проверка на наличие пустых значений
             foreach (var item in StackPanelAnswers.Items)
             {
                 if (item is StackPanel stp)
@@ -400,14 +370,8 @@ namespace Testing
                         command.Parameters["@anwId"].Value = anwId;
                         command.Parameters["@rezVl"].Value = rezVl;
 
-                        //command.Parameters.Add(
-                        //    usrTn , SqlDbType.Int, 10, "usr_tn");
-                        //command.Parameters.Add(
-                        //    anwId, SqlDbType.Int, 40, "anw_id");
-
                         da.InsertCommand = command;
                         da.InsertCommand.ExecuteNonQuery();
-                        //MessageBox.Show(txt + "\n" + id);
                         da.Dispose();
                         connection.Close();
                     }
@@ -487,6 +451,39 @@ namespace Testing
                 MessageBox.Show("Проблема с открытием файла.\nВозможно файл недоступен");
                 return;
             }
+        }
+
+        private void checkEmpty()
+        {
+            foreach (var item in StackPanelAnswers.Items)
+            {
+                if (item is StackPanel stp)
+                {
+                        ComboBox cm = (ComboBox)stp.Children[0];
+                    try
+                    {
+                        string sl = cm.SelectedValue.ToString();
+                    }
+                    catch (Exception)
+                    {
+                        buttonAnswer.Foreground = Brushes.Crimson;
+                        labelEmptyValue.Visibility = Visibility.Visible;
+                        //MessageBox.Show("Вы оставили пустое значене!\nПожалуйста, заполните его.");
+                        return;
+                    }
+                }
+            }
+        }
+
+        private void buttonAnswer_MouseEnter(object sender, MouseEventArgs e)
+        {
+            checkEmpty();
+        }
+
+        private void buttonAnswer_MouseLeave(object sender, MouseEventArgs e)
+        {
+            buttonAnswer.Foreground = Brushes.Black;
+            labelEmptyValue.Visibility = Visibility.Collapsed;
         }
     }
 }
