@@ -14,7 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using System.Data.OleDb;
+using System.Data.Sql;
 using System.Runtime.Remoting.Channels;
 using System.Threading;
 using System.IO;
@@ -27,7 +27,7 @@ namespace Testing
     /// </summary>
     public partial class MainWindow : Window
     {
-        private string _mainConnectionString;
+        private string _mainConnectionString = @"Data Source=DURON\SQLEXPRESS;Initial Catalog=testing;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
         private string _mainBasePath;
 
         public string MainConnectionString
@@ -45,7 +45,7 @@ namespace Testing
         public MainWindow()
         {
             InitializeComponent();
-            SetBasePath();
+            //SetBasePath();
             BindComboBox(comboboxFio);
         }
 
@@ -56,24 +56,41 @@ namespace Testing
             StackPanelAnswers.Items.Clear();
             textBoxQuestion.Text = String.Empty;
             string connectionString = MainConnectionString;
-            string sql =
-                $@"SELECT usr.usr_tn, 
-                    qst.qst_nm, 
-                    qst.qst_id, 
-                    anw.anw_id, 
-                    anw.anw_nm, 
-                    DCount('[anw_id]','[anw]','[qst_id] = ' & [qst]![qst_id]) AS qst_cnt,
-                    qst.qst_tp
-                FROM usr, qst INNER JOIN anw ON qst.qst_id = anw.qst_id
-                WHERE usr.usr_tn = {textBoxTn.Text} AND qst.qst_id Not In (
-                        SELECT anw.qst_id
-                        FROM anw INNER JOIN rez ON anw.anw_id = rez.anw_id
-                        WHERE rez.[usr_tn] = [usr]![usr_tn]
-                        GROUP BY anw.qst_id
-                    )
-                    ORDER BY qst.qst_id, usr.usr_tn, qst.qst_nm, anw.anw_id;
-                    ";
-            OleDbDataAdapter da = new OleDbDataAdapter(sql, connectionString);
+            //string sql =
+            //    $@"SELECT usr.usr_tn, 
+            //        qst.qst_nm, 
+            //        qst.qst_id, 
+            //        anw.anw_id, 
+            //        anw.anw_nm, 
+            //        DCount('[anw_id]','[anw]','[qst_id] = ' & [qst].[qst_id]) AS qst_cnt,
+            //        qst.qst_tp
+            //    FROM usr, qst INNER JOIN anw ON qst.qst_id = anw.qst_id
+            //    WHERE usr.usr_tn = {textBoxTn.Text} AND qst.qst_id Not In (
+            //            SELECT anw.qst_id
+            //            FROM anw INNER JOIN rez ON anw.anw_id = rez.anw_id
+            //            WHERE rez.[usr_tn] = [usr].[usr_tn]
+            //            GROUP BY anw.qst_id
+            //        )
+            //        ORDER BY qst.qst_id, usr.usr_tn, qst.qst_nm, anw.anw_id;
+            //        ";
+            string sql = $@"
+                SELECT	[usr_tn],
+		                [qstMain].[qst_nm], 
+		                [qstMain].[qst_id], 
+		                [anw].[anw_id], 
+		                [anw].[anw_nm],
+		                (SELECT COUNT([anw_id]) AS Expr1 FROM [anw] WHERE ([qst_id] = [qstMain].[qst_id])) AS [qst_cnt],
+		                qstMain.qst_tp
+                FROM [dbo].[usr], [dbo].[qst] as qstMain INNER JOIN [dbo].[anw] ON qstMain.[qst_id] = [anw].[qst_id]
+                WHERE [usr].[usr_tn] = {textBoxTn.Text} AND [qstMain].[qst_id] Not In (
+		                SELECT [anw].[qst_id]
+		                FROM [testing].[dbo].[anw] INNER JOIN [testing].[dbo].[rez] ON [anw].[anw_id] = [rez].[anw_id]
+		                WHERE [rez].[usr_tn] = [usr].[usr_tn]
+		                GROUP BY [anw].[qst_id]
+		                )
+                ORDER BY [qstMain].[qst_id], [usr].[usr_tn], [qstMain].[qst_nm], [anw].[anw_id];
+                ";
+            SqlDataAdapter da = new SqlDataAdapter(sql, connectionString);
             DataSet ds = new DataSet();
             da.Fill(ds, "t");
             int countQuestions = 0;
@@ -205,8 +222,7 @@ namespace Testing
                     Content = value,
                     Uid = id,
                     Margin = new Thickness(0, 10, 0, 0),
-                    FontSize = 16,
-                    MaxWidth = 50
+                    FontSize = 16
                 };
                 //ch.Checked += (sender, args) => { Console.WriteLine(@"Pressed " + (sender as TextBox)?.Tag); };
                 //ch.Unchecked += (sender, args) => { };
@@ -226,7 +242,7 @@ namespace Testing
         {
             string connectionString = MainConnectionString;
             string sql = "SELECT usr.usr_tn, usr.usr_fln FROM usr";
-            OleDbDataAdapter da = new OleDbDataAdapter(sql, connectionString);
+            SqlDataAdapter da = new SqlDataAdapter(sql, connectionString);
             DataSet ds = new DataSet();
             try
             {
@@ -234,7 +250,7 @@ namespace Testing
             }
             catch (Exception)
             {
-                MessageBox.Show("Не могу получить доступ к базе данных!\nБаза Access должна быть расположена в одной папке с исполняемым файлом");
+                MessageBox.Show("Не могу получить доступ к базе данных!");
                 Environment.Exit(0);
             }
             comboBoxName.DisplayMemberPath = ds.Tables["t"].Columns["usr_fln"].ToString();
@@ -257,28 +273,28 @@ namespace Testing
                         string usrTn = textBoxTn.Text;
                         string anwId = rb.Uid;
 
-                        OleDbConnection connection = new OleDbConnection
+                        SqlConnection connection = new SqlConnection
                         {
                             ConnectionString = MainConnectionString
                         };
 
                         connection.Open();
 
-                        OleDbDataAdapter da = new OleDbDataAdapter();
-                        OleDbCommand command = new OleDbCommand(
+                        SqlDataAdapter da = new SqlDataAdapter();
+                        SqlCommand command = new SqlCommand(
                             "INSERT INTO rez (usr_tn, anw_id) " +
-                            "VALUES (@usr_tn, @anw_id)", connection);
+                            "VALUES (@usrTn, @anwId)", connection);
 
-                        command.Parameters.Add("@usr_tn", OleDbType.Integer);
-                        command.Parameters.Add("@anwId", OleDbType.Integer);
+                        command.Parameters.Add("usrTn", SqlDbType.Int);
+                        command.Parameters.Add("anwId", SqlDbType.Int);
 
-                        command.Parameters["@usr_tn"].Value = usrTn;
-                        command.Parameters["@anwId"].Value = anwId;
+                        command.Parameters["usrTn"].Value = usrTn;
+                        command.Parameters["anwId"].Value = anwId;
 
                         //command.Parameters.Add(
-                        //    usrTn , OleDbType.Integer, 10, "usr_tn");
+                        //    usrTn , SqlDbType.Int, 10, "usr_tn");
                         //command.Parameters.Add(
-                        //    anwId, OleDbType.Integer, 40, "anw_id");
+                        //    anwId, SqlDbType.Int, 40, "anw_id");
 
                         da.InsertCommand = command;
                         da.InsertCommand.ExecuteNonQuery();
@@ -301,28 +317,28 @@ namespace Testing
                         string usrTn = textBoxTn.Text;
                         string anwId = ch.Uid;
 
-                        OleDbConnection connection = new OleDbConnection
+                        SqlConnection connection = new SqlConnection
                         {
                             ConnectionString = MainConnectionString
                         };
 
                         connection.Open();
 
-                        OleDbDataAdapter da = new OleDbDataAdapter();
-                        OleDbCommand command = new OleDbCommand(
+                        SqlDataAdapter da = new SqlDataAdapter();
+                        SqlCommand command = new SqlCommand(
                             "INSERT INTO rez (usr_tn, anw_id) " +
-                            "VALUES (@usr_tn, @anw_id)", connection);
+                            "VALUES (@usrTn, @anwId)", connection);
 
-                        command.Parameters.Add("@usr_tn", OleDbType.Integer);
-                        command.Parameters.Add("@anwId", OleDbType.Integer);
+                        command.Parameters.Add("@usrTn", SqlDbType.Int);
+                        command.Parameters.Add("@anwId", SqlDbType.Int);
 
-                        command.Parameters["@usr_tn"].Value = usrTn;
+                        command.Parameters["@usrTn"].Value = usrTn;
                         command.Parameters["@anwId"].Value = anwId;
 
                         //command.Parameters.Add(
-                        //    usrTn , OleDbType.Integer, 10, "usr_tn");
+                        //    usrTn , SqlDbType.Int, 10, "usr_tn");
                         //command.Parameters.Add(
-                        //    anwId, OleDbType.Integer, 40, "anw_id");
+                        //    anwId, SqlDbType.Int, 40, "anw_id");
 
                         da.InsertCommand = command;
                         da.InsertCommand.ExecuteNonQuery();
@@ -364,30 +380,30 @@ namespace Testing
                         string anwId = cm.Uid;
                         string rezVl = cm.SelectedValue.ToString();
 
-                        OleDbConnection connection = new OleDbConnection
+                        SqlConnection connection = new SqlConnection
                         {
                             ConnectionString = MainConnectionString
                         };
 
                         connection.Open();
 
-                        OleDbDataAdapter da = new OleDbDataAdapter();
-                        OleDbCommand command = new OleDbCommand(
+                        SqlDataAdapter da = new SqlDataAdapter();
+                        SqlCommand command = new SqlCommand(
                             "INSERT INTO rez (usr_tn, anw_id, rez_vl) " +
-                            "VALUES (@usr_tn, @anw_id, @rez_vl)", connection);
+                            "VALUES (@usrTn, @anwId, @rezVl)", connection);
 
-                        command.Parameters.Add("@usr_tn", OleDbType.Integer);
-                        command.Parameters.Add("@anwId", OleDbType.Integer);
-                        command.Parameters.Add("@rezVl", OleDbType.Integer);
+                        command.Parameters.Add("@usrTn", SqlDbType.Int);
+                        command.Parameters.Add("@anwId", SqlDbType.Int);
+                        command.Parameters.Add("@rezVl", SqlDbType.Int);
 
-                        command.Parameters["@usr_tn"].Value = usrTn;
+                        command.Parameters["@usrTn"].Value = usrTn;
                         command.Parameters["@anwId"].Value = anwId;
                         command.Parameters["@rezVl"].Value = rezVl;
 
                         //command.Parameters.Add(
-                        //    usrTn , OleDbType.Integer, 10, "usr_tn");
+                        //    usrTn , SqlDbType.Int, 10, "usr_tn");
                         //command.Parameters.Add(
-                        //    anwId, OleDbType.Integer, 40, "anw_id");
+                        //    anwId, SqlDbType.Int, 40, "anw_id");
 
                         da.InsertCommand = command;
                         da.InsertCommand.ExecuteNonQuery();
@@ -436,27 +452,27 @@ namespace Testing
         }
 
         //Проверка наличия пути к базе
-        private void SetBasePath()
-        {
+        //private void SetBasePath()
+        //{
 
-            string baseDirectory = Environment.CurrentDirectory;
-            string configFile = baseDirectory + @"\config.txt";
-            if (File.Exists(configFile))
-            {
-                System.IO.StreamReader file = new System.IO.StreamReader(configFile);
-                string line = file.ReadLine();
-                MainBasePath = line;
-                MainConnectionString = @"Provider=Microsoft.Jet.OLEDB.4.0;Data Source="+line+";Persist Security Info=True;Jet OLEDB:Database Password=lenovo";
-                // + ";Persist Security Info=True;Jet OLEDB:Database Password=lenovo"
-            }
-            else
-            {
-                MessageBox.Show("Конфигурационный файл не найден!\n" +
-                                "Создайте файл config.txt в папке с программой и " +
-                                "укажите в нем путь к базе данных");
-                Environment.Exit(0);
-            }
-        }
+        //    string baseDirectory = Environment.CurrentDirectory;
+        //    string configFile = baseDirectory + @"\config.txt";
+        //    if (File.Exists(configFile))
+        //    {
+        //        System.IO.StreamReader file = new System.IO.StreamReader(configFile);
+        //        string line = file.ReadLine();
+        //        MainBasePath = line;
+        //        MainConnectionString = @"Provider=Microsoft.Jet.Sql.4.0;Data Source="+line+";Persist Security Info=True;Jet Sql:Database Password=lenovo";
+        //        // + ";Persist Security Info=True;Jet Sql:Database Password=lenovo"
+        //    }
+        //    else
+        //    {
+        //        MessageBox.Show("Конфигурационный файл не найден!\n" +
+        //                        "Создайте файл config.txt в папке с программой и " +
+        //                        "укажите в нем путь к базе данных");
+        //        Environment.Exit(0);
+        //    }
+        //}
 
         private void label_Standart_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
