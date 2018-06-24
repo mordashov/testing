@@ -28,7 +28,7 @@ namespace Testing
     public partial class MainWindow : Window
     {
         private string _mainConnectionString = @"Data Source=DURON\SQLEXPRESS;Initial Catalog=testing;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
-        private string _mainBasePath;
+        //private string _mainBasePath;
 
         public string MainConnectionString
         {
@@ -36,11 +36,11 @@ namespace Testing
             set => _mainConnectionString = value;
         }
 
-        public string MainBasePath
-        {
-            get => _mainBasePath;
-            set => _mainBasePath = value;
-        }
+        //public string MainBasePath
+        //{
+        //    get => _mainBasePath;
+        //    set => _mainBasePath = value;
+        //}
 
         public MainWindow()
         {
@@ -440,7 +440,7 @@ namespace Testing
 
         private void label_Standart_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            string path = MainBasePath.Replace("testing.mdb", null) + "Стандарт проведения СР.pptx";
+            string path = Environment.CurrentDirectory + "//Стандарт проведения СР.pptx";
 
             try
             {
