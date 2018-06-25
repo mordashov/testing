@@ -27,7 +27,8 @@ namespace Testing
     /// </summary>
     public partial class MainWindow : Window
     {
-        private string _mainConnectionString = @"Data Source=DURON\SQLEXPRESS;Initial Catalog=testing;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+        //private string _mainConnectionString = @"Data Source=DURON\SQLEXPRESS;Initial Catalog=testing;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+        private string _mainConnectionString = @"Data Source=alauda\alauda;Initial Catalog=ufs;User ID=prozorova_os;Password=q1w2e3r4";
         //private string _mainBasePath;
 
         public string MainConnectionString
@@ -68,20 +69,20 @@ namespace Testing
             textBoxQuestion.Text = String.Empty;
             string connectionString = MainConnectionString;
             string sql = $@"
-                SELECT	[usr_tn],
-		                [qstMain].[qst_nm], 
-		                [qstMain].[qst_id], 
-		                [anw].[anw_id], 
-		                [anw].[anw_nm],
-		                (SELECT COUNT([anw_id]) AS Expr1 FROM [anw] WHERE ([qst_id] = [qstMain].[qst_id])) AS [qst_cnt],
-		                qstMain.qst_tp
-                FROM [dbo].[usr], [dbo].[qst] as qstMain INNER JOIN [dbo].[anw] ON qstMain.[qst_id] = [anw].[qst_id]
+               SELECT  [usr_tn],
+                                                [qstMain].[qst_nm], 
+                                                [qstMain].[qst_id], 
+                                                [anw].[anw_id], 
+                                                [anw].[anw_nm],
+                                                (SELECT COUNT([anw_id]) AS Expr1 FROM [sr].[anw] WHERE ([qst_id] = [qstMain].[qst_id])) AS [qst_cnt],
+                                                qstMain.qst_tp
+                FROM [sr].[usr], [sr].[qst] as qstMain INNER JOIN [sr].[anw] ON qstMain.[qst_id] = [anw].[qst_id]
                 WHERE [usr].[usr_tn] = {textBoxTn.Text} AND [qstMain].[qst_id] Not In (
-		                SELECT [anw].[qst_id]
-		                FROM [testing].[dbo].[anw] INNER JOIN [testing].[dbo].[rez] ON [anw].[anw_id] = [rez].[anw_id]
-		                WHERE [rez].[usr_tn] = [usr].[usr_tn]
-		                GROUP BY [anw].[qst_id]
-		                )
+                                                SELECT [anw].[qst_id]
+                                                FROM [ufs].[sr].[anw] INNER JOIN [ufs].[sr].[rez] ON [anw].[anw_id] = [rez].[anw_id]
+                                                WHERE [rez].[usr_tn] = [usr].[usr_tn]
+                                                GROUP BY [anw].[qst_id]
+                                                )
                 ORDER BY [qstMain].[qst_id], [usr].[usr_tn], [qstMain].[qst_nm], [anw].[anw_id];
                 ";
             SqlDataAdapter da = new SqlDataAdapter(sql, connectionString);
@@ -222,7 +223,7 @@ namespace Testing
         public void BindComboBox(ComboBox comboBoxName)
         {
             string connectionString = MainConnectionString;
-            string sql = "SELECT usr.usr_tn, usr.usr_fln FROM usr";
+            string sql = "SELECT SR.usr.usr_tn, SR.usr.usr_fln FROM SR.usr";
             SqlDataAdapter da = new SqlDataAdapter(sql, connectionString);
             DataSet ds = new DataSet();
             try
@@ -263,7 +264,7 @@ namespace Testing
 
                         SqlDataAdapter da = new SqlDataAdapter();
                         SqlCommand command = new SqlCommand(
-                            "INSERT INTO rez (usr_tn, anw_id) " +
+                            "INSERT INTO sr.rez (usr_tn, anw_id) " +
                             "VALUES (@usrTn, @anwId)", connection);
 
                         command.Parameters.Add("usrTn", SqlDbType.Int);
@@ -302,7 +303,7 @@ namespace Testing
 
                         SqlDataAdapter da = new SqlDataAdapter();
                         SqlCommand command = new SqlCommand(
-                            "INSERT INTO rez (usr_tn, anw_id) " +
+                            "INSERT INTO sr.rez (usr_tn, anw_id) " +
                             "VALUES (@usrTn, @anwId)", connection);
 
                         command.Parameters.Add("@usrTn", SqlDbType.Int);
@@ -359,7 +360,7 @@ namespace Testing
 
                         SqlDataAdapter da = new SqlDataAdapter();
                         SqlCommand command = new SqlCommand(
-                            "INSERT INTO rez (usr_tn, anw_id, rez_vl) " +
+                            "INSERT INTO sr.rez (usr_tn, anw_id, rez_vl) " +
                             "VALUES (@usrTn, @anwId, @rezVl)", connection);
 
                         command.Parameters.Add("@usrTn", SqlDbType.Int);
