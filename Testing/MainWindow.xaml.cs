@@ -27,8 +27,8 @@ namespace Testing
     /// </summary>
     public partial class MainWindow : Window
     {
-        //private string _mainConnectionString = @"Data Source=DURON\SQLEXPRESS;Initial Catalog=testing;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
-        private string _mainConnectionString = @"Data Source=alauda\alauda;Initial Catalog=ufs;User ID=prozorova_os;Password=q1w2e3r4";
+        private string _mainConnectionString = @"Data Source=DURON\SQLEXPRESS;Initial Catalog=testing;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+        //private string _mainConnectionString = @"Data Source=alauda\alauda;Initial Catalog=ufs;User ID=prozorova_os;Password=q1w2e3r4";
         //private string _mainBasePath;
 
         public string MainConnectionString
@@ -50,8 +50,11 @@ namespace Testing
             //Поиск презентации стандарта в папке с исполняемым файлом
             CheckStandart();
             BindComboBox(comboboxFio);
+
+            //http://www.wpf-tutorial.com/misc/dispatchertimer/
         }
 
+        //Поиск файла со стандартом
         private void CheckStandart()
         {
             string standartName = Environment.CurrentDirectory + "//Стандарт проведения СР.pptx";
@@ -68,18 +71,19 @@ namespace Testing
             StackPanelAnswers.Items.Clear();
             textBoxQuestion.Text = String.Empty;
             string connectionString = MainConnectionString;
+            //[sr]., [dbo].
             string sql = $@"
                SELECT  [usr_tn],
                                                 [qstMain].[qst_nm], 
                                                 [qstMain].[qst_id], 
                                                 [anw].[anw_id], 
                                                 [anw].[anw_nm],
-                                                (SELECT COUNT([anw_id]) AS Expr1 FROM [sr].[anw] WHERE ([qst_id] = [qstMain].[qst_id])) AS [qst_cnt],
+                                                (SELECT COUNT([anw_id]) AS Expr1 FROM [dbo].[anw] WHERE ([qst_id] = [qstMain].[qst_id])) AS [qst_cnt],
                                                 qstMain.qst_tp
-                FROM [sr].[usr], [sr].[qst] as qstMain INNER JOIN [sr].[anw] ON qstMain.[qst_id] = [anw].[qst_id]
+                FROM [dbo].[usr], [dbo].[qst] as qstMain INNER JOIN [dbo].[anw] ON qstMain.[qst_id] = [anw].[qst_id]
                 WHERE [usr].[usr_tn] = {textBoxTn.Text} AND [qstMain].[qst_id] Not In (
                                                 SELECT [anw].[qst_id]
-                                                FROM [ufs].[sr].[anw] INNER JOIN [ufs].[sr].[rez] ON [anw].[anw_id] = [rez].[anw_id]
+                                                FROM [dbo].[anw] INNER JOIN [dbo].[rez] ON [anw].[anw_id] = [rez].[anw_id]
                                                 WHERE [rez].[usr_tn] = [usr].[usr_tn]
                                                 GROUP BY [anw].[qst_id]
                                                 )
@@ -220,10 +224,11 @@ namespace Testing
             }
         }
 
+        //Генерация выпадающего списка
         public void BindComboBox(ComboBox comboBoxName)
         {
             string connectionString = MainConnectionString;
-            string sql = "SELECT SR.usr.usr_tn, SR.usr.usr_fln FROM SR.usr";
+            string sql = "SELECT [dbo].[usr].[usr_tn], [dbo].[usr].[usr_fln] FROM [dbo].[usr]";
             SqlDataAdapter da = new SqlDataAdapter(sql, connectionString);
             DataSet ds = new DataSet();
             try
@@ -264,7 +269,7 @@ namespace Testing
 
                         SqlDataAdapter da = new SqlDataAdapter();
                         SqlCommand command = new SqlCommand(
-                            "INSERT INTO sr.rez (usr_tn, anw_id) " +
+                            "INSERT INTO [dbo].rez (usr_tn, anw_id) " +
                             "VALUES (@usrTn, @anwId)", connection);
 
                         command.Parameters.Add("usrTn", SqlDbType.Int);
@@ -303,7 +308,7 @@ namespace Testing
 
                         SqlDataAdapter da = new SqlDataAdapter();
                         SqlCommand command = new SqlCommand(
-                            "INSERT INTO sr.rez (usr_tn, anw_id) " +
+                            "INSERT INTO [dbo].rez (usr_tn, anw_id) " +
                             "VALUES (@usrTn, @anwId)", connection);
 
                         command.Parameters.Add("@usrTn", SqlDbType.Int);
@@ -360,7 +365,7 @@ namespace Testing
 
                         SqlDataAdapter da = new SqlDataAdapter();
                         SqlCommand command = new SqlCommand(
-                            "INSERT INTO sr.rez (usr_tn, anw_id, rez_vl) " +
+                            "INSERT INTO [dbo].rez (usr_tn, anw_id, rez_vl) " +
                             "VALUES (@usrTn, @anwId, @rezVl)", connection);
 
                         command.Parameters.Add("@usrTn", SqlDbType.Int);
@@ -397,20 +402,104 @@ namespace Testing
             GenerateQuestions();
         }
 
+        //Получение.отправка одиночого значения sql
+        private string  SingleResult(string sql, string connectionString)
+        {
+            string result = null;
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                SqlCommand cmd = new SqlCommand(sql, conn);
+
+                try
+                {
+                    conn.Open();
+                    result = cmd.ExecuteScalar().ToString();
+                }
+                catch (Exception ex)
+                {
+                    conn.Close();
+                    Console.WriteLine(ex.Message);
+                }
+
+                conn.Close();
+
+            }
+
+            return result;
+        }
+
+        //Подсчет времени
+        private bool CountTime()
+        {
+            //ищу был ли старт по данному сотруднику
+            bool result = true;
+            int limit = 2;
+            string user = Environment.UserName;
+            string sql = 
+                $@"SELECT   [usr_st]
+                FROM        [dbo].[usr]
+                WHERE       [usr_tn] = {textBoxTn.Text}";
+            string resSql = SingleResult(sql, MainConnectionString);
+            if (string.IsNullOrEmpty(resSql))
+            {
+                //DateTime dt = new DateTime();
+                //dt = DateTime.Now;
+                sql = $@"UPDATE	[dbo].[usr] 
+                        SET		[usr_st] = CURRENT_TIMESTAMP, [usr_fn] = CURRENT_TIMESTAMP,[usr_login] = '{user}'
+                        WHERE	[usr_tn] = {textBoxTn.Text}";
+            }
+            else
+            {
+                sql = $@"UPDATE	[dbo].[usr] 
+                        SET		[usr_fn] = CURRENT_TIMESTAMP
+                        WHERE	[usr_tn] = {textBoxTn.Text}";
+            }
+            SingleResult(sql, MainConnectionString);
+            sql = $@"SELECT     DATEDIFF ( MI , [usr_st] , [usr_fn] ) 
+                    FROM        [dbo].[usr]
+                    WHERE       [usr_tn] = {textBoxTn.Text}";
+            resSql = SingleResult(sql, MainConnectionString);
+            try
+            {
+                if (int.Parse(resSql) >= limit)
+                {
+                    MessageBox.Show($"Превышен лимит времени ({limit} мин.) на выполнение теста");
+                    result = false;
+                }
+            }
+            catch (Exception e)
+            {
+                //Console.WriteLine(e);
+                //throw;
+            }
+
+            return result;
+
+            //если был и старт и финишь, проверяю на 30 мин 
+            //если не был записываю время старта
+            //если был записываю время филана
+        }
+
+        //Нажатие кнопки "Ответить"
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             buttonAnswer.IsEnabled = false;
+            if (!CountTime()) return;
             InsertAnswer();
             Thread.Sleep(1000);
+            //Расстановка времени
             GenerateQuestions();
             
         }
 
+        //Закрытие ComboBox
         private void comboboxFio_DropDownClosed(object sender, EventArgs e)
         {
             SelectWorker();
         }
 
+        //Пепермещение по ComboBox кнопками
         private void comboboxFio_KeyUp(object sender, KeyEventArgs e)
         {
             SelectWorker();
@@ -439,6 +528,7 @@ namespace Testing
         //    }
         //}
 
+        //Изменение курсора при наведении мыши на надпись Стандарт
         private void label_Standart_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             string path = Environment.CurrentDirectory + "//Стандарт проведения СР.pptx";
@@ -454,6 +544,7 @@ namespace Testing
             }
         }
 
+        //Поиск пустых значений при расставлении порядка в ответах с комбобоксами
         private void checkEmpty()
         {
             foreach (var item in StackPanelAnswers.Items)
@@ -476,11 +567,13 @@ namespace Testing
             }
         }
 
+        //при наведении мыши на кнопку крашу ее красным и вывожу предупреждение
         private void buttonAnswer_MouseEnter(object sender, MouseEventArgs e)
         {
             checkEmpty();
         }
 
+        //сбрамыва все что натворил при наведении
         private void buttonAnswer_MouseLeave(object sender, MouseEventArgs e)
         {
             buttonAnswer.Foreground = Brushes.Black;
