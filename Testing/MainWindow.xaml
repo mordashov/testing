@@ -16,7 +16,7 @@
         </Grid.RowDefinitions>
         <Label Grid.Row="0" Content="Проверка знаний сотрудников" HorizontalAlignment="Center"  Margin="51,0,53,0" VerticalAlignment="Top" Height="69" Width="688" FontSize="40"/>
         <StackPanel Grid.Row="1" HorizontalAlignment="Left" Height="70" Margin="56,0,0,0" VerticalAlignment="Top" Width="683" Orientation="Horizontal">
-            <ComboBox x:Name="comboboxFio" Width="300" Height="40" HorizontalAlignment="Center" IsEditable="True" FontSize="16" Text="ФИО" VerticalContentAlignment="Center" ItemsSource="{Binding Mode=OneWay}" DropDownClosed="comboboxFio_DropDownClosed" KeyUp="comboboxFio_KeyUp" IsReadOnly ="True" />
+            <ComboBox x:Name="comboboxFio" Width="300" Height="40" HorizontalAlignment="Center" IsEditable="True" FontSize="16" Text="ФИО" VerticalContentAlignment="Center" ItemsSource="{Binding Mode=OneWay}" DropDownClosed="comboboxFio_DropDownClosed" KeyUp="comboboxFio_KeyUp" IsReadOnly ="False" MaxDropDownHeight="0" />
             <TextBox x:Name="textBoxTn" TextWrapping="NoWrap" Text="Таб. №" Width="120" Height="40" Margin="20,0,0,0" TextAlignment="Center" VerticalContentAlignment="Center" FontSize="16" IsReadOnly ="True"  />
             <Label x:Name="labelTime" Visibility="Hidden" Content="0:00:00" Width="154" Margin="40,10,0,10" VerticalAlignment="Center" HorizontalAlignment="Center" VerticalContentAlignment="Center" FontSize="30" FontWeight="Bold"/>
         </StackPanel>

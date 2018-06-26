@@ -520,8 +520,8 @@ namespace Testing
         {
             buttonAnswer.IsEnabled = false;
             labelTime.Visibility = Visibility.Visible;
-            timer_Tick();
             if (!CountTime()) return;
+            timer_Tick();
             InsertAnswer();
             Thread.Sleep(1000);
             //Расстановка времени
