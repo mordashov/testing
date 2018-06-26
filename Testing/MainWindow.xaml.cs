@@ -29,8 +29,8 @@ namespace Testing
     public partial class MainWindow : Window
     {
         //private string _mainConnectionString = @"Data Source=DURON\SQLEXPRESS;Initial Catalog=testing;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
-        private string _mainConnectionString = @"Data Source=LENOVO\SQLEXPRESS;Initial Catalog=ufs;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
-        //private string _mainConnectionString = @"Data Source=alauda\alauda;Initial Catalog=ufs;User ID=prozorova_os;Password=q1w2e3r4";
+        //private string _mainConnectionString = @"Data Source=LENOVO\SQLEXPRESS;Initial Catalog=ufs;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+        private string _mainConnectionString = @"Data Source=alauda\alauda;Initial Catalog=ufs;User ID=prozorova_os;Password=q1w2e3r4";
         //private string _mainBasePath;
 
         public string MainConnectionString
@@ -81,7 +81,7 @@ namespace Testing
         //Вывод вариантов ответов
         private void GenerateQuestions()
         {
-
+        
             StackPanelAnswers.Items.Clear();
             textBoxQuestion.Text = String.Empty;
             string connectionString = MainConnectionString;
@@ -92,12 +92,12 @@ namespace Testing
                                                 [qstMain].[qst_id], 
                                                 [anw].[anw_id], 
                                                 [anw].[anw_nm],
-                                                (SELECT COUNT([anw_id]) AS Expr1 FROM [dbo].[anw] WHERE ([qst_id] = [qstMain].[qst_id])) AS [qst_cnt],
+                                                (SELECT COUNT([anw_id]) AS Expr1 FROM [sr].[anw] WHERE ([qst_id] = [qstMain].[qst_id])) AS [qst_cnt],
                                                 qstMain.qst_tp
-                FROM [dbo].[usr], [dbo].[qst] as qstMain INNER JOIN [dbo].[anw] ON qstMain.[qst_id] = [anw].[qst_id]
+                FROM [sr].[usr], [sr].[qst] as qstMain INNER JOIN [sr].[anw] ON qstMain.[qst_id] = [anw].[qst_id]
                 WHERE [usr].[usr_tn] = {textBoxTn.Text} AND [qstMain].[qst_id] Not In (
                                                 SELECT [anw].[qst_id]
-                                                FROM [dbo].[anw] INNER JOIN [dbo].[rez] ON [anw].[anw_id] = [rez].[anw_id]
+                                                FROM [sr].[anw] INNER JOIN [sr].[rez] ON [anw].[anw_id] = [rez].[anw_id]
                                                 WHERE [rez].[usr_tn] = [usr].[usr_tn]
                                                 GROUP BY [anw].[qst_id]
                                                 )
@@ -242,7 +242,7 @@ namespace Testing
         public void BindComboBox(ComboBox comboBoxName)
         {
             string connectionString = MainConnectionString;
-            string sql = "SELECT [dbo].[usr].[usr_tn], [dbo].[usr].[usr_fln] FROM [dbo].[usr]";
+            string sql = "SELECT [sr].[usr].[usr_tn], [sr].[usr].[usr_fln] FROM [sr].[usr]";
             SqlDataAdapter da = new SqlDataAdapter(sql, connectionString);
             DataSet ds = new DataSet();
             try
@@ -283,7 +283,7 @@ namespace Testing
 
                         SqlDataAdapter da = new SqlDataAdapter();
                         SqlCommand command = new SqlCommand(
-                            "INSERT INTO [dbo].rez (usr_tn, anw_id) " +
+                            "INSERT INTO [sr].rez (usr_tn, anw_id) " +
                             "VALUES (@usrTn, @anwId)", connection);
 
                         command.Parameters.Add("usrTn", SqlDbType.Int);
@@ -322,7 +322,7 @@ namespace Testing
 
                         SqlDataAdapter da = new SqlDataAdapter();
                         SqlCommand command = new SqlCommand(
-                            "INSERT INTO [dbo].rez (usr_tn, anw_id) " +
+                            "INSERT INTO [sr].rez (usr_tn, anw_id) " +
                             "VALUES (@usrTn, @anwId)", connection);
 
                         command.Parameters.Add("@usrTn", SqlDbType.Int);
@@ -379,7 +379,7 @@ namespace Testing
 
                         SqlDataAdapter da = new SqlDataAdapter();
                         SqlCommand command = new SqlCommand(
-                            "INSERT INTO [dbo].rez (usr_tn, anw_id, rez_vl) " +
+                            "INSERT INTO [sr].rez (usr_tn, anw_id, rez_vl) " +
                             "VALUES (@usrTn, @anwId, @rezVl)", connection);
 
                         command.Parameters.Add("@usrTn", SqlDbType.Int);
@@ -452,26 +452,26 @@ namespace Testing
             string user = Environment.UserName;
             string sql = 
                 $@"SELECT   [usr_st]
-                FROM        [dbo].[usr]
+                FROM        [sr].[usr]
                 WHERE       [usr_tn] = {textBoxTn.Text}";
             string resSql = SingleResult(sql, MainConnectionString);
             if (string.IsNullOrEmpty(resSql))
             {
                 //DateTime dt = new DateTime();
                 //dt = DateTime.Now;
-                sql = $@"UPDATE	[dbo].[usr] 
+                sql = $@"UPDATE	[sr].[usr] 
                         SET		[usr_st] = CURRENT_TIMESTAMP, [usr_fn] = CURRENT_TIMESTAMP,[usr_login] = '{user}'
                         WHERE	[usr_tn] = {textBoxTn.Text}";
             }
             else
             {
-                sql = $@"UPDATE	[dbo].[usr] 
+                sql = $@"UPDATE	[sr].[usr] 
                         SET		[usr_fn] = CURRENT_TIMESTAMP
                         WHERE	[usr_tn] = {textBoxTn.Text}";
             }
             SingleResult(sql, MainConnectionString);
             sql = $@"SELECT     DATEDIFF ( MI , [usr_st] , [usr_fn] ) 
-                    FROM        [dbo].[usr]
+                    FROM        [sr].[usr]
                     WHERE       [usr_tn] = {textBoxTn.Text}";
             resSql = SingleResult(sql, MainConnectionString);
             try
@@ -498,7 +498,7 @@ namespace Testing
         void timer_Tick()
         {
             string sql = $@"SELECT     DATEDIFF ( SS , [usr_st] , [usr_fn] ) 
-                    FROM        [dbo].[usr]
+                    FROM        [sr].[usr]
                     WHERE       [usr_tn] = {textBoxTn.Text}";
 
             string resSql = SingleResult(sql, MainConnectionString);
