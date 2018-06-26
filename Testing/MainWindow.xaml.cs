@@ -19,6 +19,7 @@ using System.Runtime.Remoting.Channels;
 using System.Threading;
 using System.IO;
 using System.Diagnostics;
+using System.Windows.Threading;
 
 namespace Testing
 {
@@ -27,7 +28,8 @@ namespace Testing
     /// </summary>
     public partial class MainWindow : Window
     {
-        private string _mainConnectionString = @"Data Source=DURON\SQLEXPRESS;Initial Catalog=testing;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+        //private string _mainConnectionString = @"Data Source=DURON\SQLEXPRESS;Initial Catalog=testing;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+        private string _mainConnectionString = @"Data Source=LENOVO\SQLEXPRESS;Initial Catalog=ufs;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
         //private string _mainConnectionString = @"Data Source=alauda\alauda;Initial Catalog=ufs;User ID=prozorova_os;Password=q1w2e3r4";
         //private string _mainBasePath;
 
@@ -42,16 +44,28 @@ namespace Testing
         //    get => _mainBasePath;
         //    set => _mainBasePath = value;
         //}
+        DispatcherTimer _timer;
+        TimeSpan _time;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            _time = TimeSpan.FromMinutes(30);
+
+            _timer = new DispatcherTimer(new TimeSpan(0, 0, 1), DispatcherPriority.Normal, delegate
+            {
+                labelTime.Content = _time.ToString("c");
+                if (_time == TimeSpan.Zero) _timer.Stop();
+                _time = _time.Add(TimeSpan.FromSeconds(-1));
+            }, Application.Current.Dispatcher);
+
+            _timer.Start();
+
             //SetBasePath();
             //Поиск презентации стандарта в папке с исполняемым файлом
             CheckStandart();
             BindComboBox(comboboxFio);
-
-            //http://www.wpf-tutorial.com/misc/dispatchertimer/
         }
 
         //Поиск файла со стандартом
@@ -434,7 +448,7 @@ namespace Testing
         {
             //ищу был ли старт по данному сотруднику
             bool result = true;
-            int limit = 2;
+            int limit = 30;
             string user = Environment.UserName;
             string sql = 
                 $@"SELECT   [usr_st]
@@ -481,28 +495,51 @@ namespace Testing
             //если был записываю время филана
         }
 
+        void timer_Tick()
+        {
+            string sql = $@"SELECT     DATEDIFF ( SS , [usr_st] , [usr_fn] ) 
+                    FROM        [dbo].[usr]
+                    WHERE       [usr_tn] = {textBoxTn.Text}";
+
+            string resSql = SingleResult(sql, MainConnectionString);
+            try
+            {
+                //labelTime.Content = DateTime.Parse("20");
+                _time = TimeSpan.FromMinutes(30) - TimeSpan.FromSeconds(int.Parse(resSql));
+            }
+            catch (Exception)
+            {
+
+                //labelTime.Content = DateTime.Now.ToLongTimeString();
+                _time = TimeSpan.FromMinutes(30);
+            }
+        }
+
         //Нажатие кнопки "Ответить"
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             buttonAnswer.IsEnabled = false;
+            labelTime.Visibility = Visibility.Visible;
+            timer_Tick();
             if (!CountTime()) return;
             InsertAnswer();
             Thread.Sleep(1000);
             //Расстановка времени
             GenerateQuestions();
-            
         }
 
         //Закрытие ComboBox
         private void comboboxFio_DropDownClosed(object sender, EventArgs e)
         {
             SelectWorker();
+            timer_Tick();
         }
 
         //Пепермещение по ComboBox кнопками
         private void comboboxFio_KeyUp(object sender, KeyEventArgs e)
         {
             SelectWorker();
+            timer_Tick();
         }
 
         //Проверка наличия пути к базе
